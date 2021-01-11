@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include "include/Table.h"
-
+#define RECURSION_LIMIT (10000)
 typedef pair<int, int> table_block_pair;
 
 void available_actions(weak_ptr<Table> table, bool operation, vector<table_block_pair>&result)
@@ -50,10 +50,15 @@ T choice(vector<T>& data)
 
 size_t last_table_index = numeric_limits<size_t>::max();
 template <typename T>
-void solver(TableList<T>& task, int num_robots, unordered_map<size_t, TableList<T>> caches={}) {
+int solver(TableList<T>& task, int num_robots, unordered_map<size_t, TableList<T>> caches={}, int recursion_count = 0) {
     if (winning_state(task)) {
         cout << "[Info]: Found winning states" << endl;
-        return;
+        return 0;
+    }
+    else if (recursion_count > RECURSION_LIMIT)
+    {
+        cerr << "[Info]: Not Found winning states" << endl;
+        return -1;
     }
     // get available actions in terms of picks and places
     vector<table_block_pair> blocks, places;
@@ -73,25 +78,31 @@ void solver(TableList<T>& task, int num_robots, unordered_map<size_t, TableList<
         caches[task_id] = task;
     TableList<T> new_task;
     std::copy(task.begin(), task.end(), back_inserter(new_task));
-    solver(new_task, num_robots, caches);
+    return solver(new_task, num_robots, caches, ++recursion_count) + 1;
 
 
 }
 int main() {
     std::cout << "Hello, World!" << std::endl;
     srand (1234); // random seed
-    auto table1 = make_shared<Table>(5,3,BLUE);
-    auto table2 = make_shared<Table>(5,3,RED);
-    TableList<shared_ptr<Table>> task;
 
-    // get hash value for each table
-    task.emplace_back(table1);
-    task.emplace_back(table2);
+    auto table1 = make_shared<Table>(10,8,BLUE);
+    auto table2 = make_shared<Table>(10,8,RED);
+    int search_len;
+    do{
+        TableList<shared_ptr<Table>> task;
+        // get hash value for each table
+        task.emplace_back(table1);
+        task.emplace_back(table2);
 
-    solver(task, 2);
+        search_len = solver(task, 2);
 
-    cout << task.get_hash() << "| win " <<
-    winning_state(task) << endl;
+        if(search_len < RECURSION_LIMIT)
+        cout << task.get_hash() << "| win after searching " <<
+             search_len << endl;
+
+    }while (search_len>=RECURSION_LIMIT);
+
 
     return 0;
 }
