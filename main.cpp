@@ -1,9 +1,14 @@
 #include <iostream>
 #include <algorithm>
 #include <unordered_map>
+#include <boost/program_options.hpp>
 #include "include/Table.h"
+
+#define DEBUG_INFO(x) cout << "\033[1;36m" << x << "\033[0m"
+
 #define RECURSION_LIMIT (10000)
 typedef pair<int, int> table_block_pair;
+using namespace boost::program_options;
 
 void available_actions(weak_ptr<Table> table, bool operation, vector<table_block_pair>&result)
 {
@@ -52,7 +57,7 @@ size_t last_table_index = numeric_limits<size_t>::max();
 template <typename T>
 int solver(TableList<T>& task, int num_robots, unordered_map<size_t, TableList<T>> caches={}, int recursion_count = 0) {
     if (winning_state(task)) {
-        cout << "[Info]: Found winning states" << endl;
+        DEBUG_INFO ("[Info]: Found winning states" << endl);
         return 0;
     }
     else if (recursion_count > RECURSION_LIMIT)
@@ -80,26 +85,56 @@ int solver(TableList<T>& task, int num_robots, unordered_map<size_t, TableList<T
     std::copy(task.begin(), task.end(), back_inserter(new_task));
     return solver(new_task, num_robots, caches, ++recursion_count) + 1;
 
-
 }
-int main() {
-    std::cout << "Hello, World!" << std::endl;
+
+size_t num_states(int num_places, int num_blocks, int num_robots)
+{
+    const size_t num_tables = 2;
+    auto temp =  num_tables * (num_places - num_blocks);
+    auto num_transitions = pow(temp, 3);
+    auto total_num_states = pow(2, num_transitions);
+    DEBUG_INFO("[Info]: each transition has " << num_transitions << endl);
+    DEBUG_INFO("[Info]: total number of transitions "<<total_num_states << endl);
+    return total_num_states;
+}
+
+
+int main(int argc, char* argv[]) {
+    DEBUG_INFO("[Info]: Block Transfer" << std::endl);
     srand (1234); // random seed
 
-    auto table1 = make_shared<Table>(10,8,BLUE);
-    auto table2 = make_shared<Table>(10,8,RED);
+    options_description desc("Options");
+    int num_places, num_blocks, num_robots;
+    desc.add_options()
+            ("help,h", "Help screen")
+            ("num_places", value<int>()->default_value(5), "#places per table")
+            ("num_robots", value<int>()->default_value(2), "total number of robots")
+            ("num_blocks", value<int>()->default_value(3), "#blocks per table");
+    variables_map vm;
+    store(parse_command_line(argc, argv, desc), vm);
+    notify(vm);
+
+    num_places = vm["num_places"].as<int>();
+    num_blocks = vm["num_blocks"].as<int>();
+    num_robots = vm["num_robots"].as<int>();
+    num_states( num_places,  num_blocks,  num_robots);
+
+
+
+    auto table1 = make_shared<Table>(num_places,num_blocks,BLUE);
+    auto table2 = make_shared<Table>(num_places,num_blocks,RED);
     int search_len;
     do{
         TableList<shared_ptr<Table>> task;
         // get hash value for each table
-        task.emplace_back(table1);
-        task.emplace_back(table2);
+        task.emplace_back(table1->get_ptr());
+        task.emplace_back(table2->get_ptr());
 
-        search_len = solver(task, 2);
+        search_len = solver(task, num_robots);
 
         if(search_len < RECURSION_LIMIT)
-        cout << task.get_hash() << "| win after searching " <<
-             search_len << endl;
+        DEBUG_INFO("[Info]: winning state " <<task.get_hash() << "| win after searching " <<
+             search_len << endl);
 
     }while (search_len>=RECURSION_LIMIT);
 
