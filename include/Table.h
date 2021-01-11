@@ -26,7 +26,7 @@ enum COLOR
 struct Object
 {
     const int table_id, block_id;
-    const COLOR color;
+    COLOR color;
 
     friend ostream &operator<<(ostream &os, const Object &object) {
         os << "(table_id: " << object.table_id << " block_id: " << object.block_id << " color: " << object.color << ")";
@@ -77,6 +77,7 @@ public:
         return std::hash<std::string>{}(os.str()) ;
     }
 
+    int get_id(){ return id_;};
 
 protected:
     int num_places_, id_;
@@ -94,7 +95,7 @@ public:
     size_t get_hash()
     {
         size_t value;
-        for (int i = 0; i<this->size(); ++i)
+        for (int i = 0; i < this->size(); ++i)
         {
             if( i == 0)
                 value = this->at(i)->get_hash();
@@ -102,6 +103,13 @@ public:
                 value = value >> this->at(i)->get_hash();
         }
         return value;
+    }
+
+    int find_index(int table_id)
+    {
+        for (int i = 0; i < this->size(); ++i)
+            if( this->at(i)->get_id() == table_id)
+                return i;
     }
 
 };
