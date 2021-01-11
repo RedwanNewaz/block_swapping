@@ -1,5 +1,6 @@
 #include <iostream>
 #include <algorithm>
+#include <unordered_map>
 #include "include/Table.h"
 
 typedef pair<int, int> table_block_pair;
@@ -47,9 +48,9 @@ T choice(vector<T>& data)
     return samples_out.at(0);
 }
 
-
+size_t last_table_index = numeric_limits<size_t>::max();
 template <typename T>
-void solver(TableList<T>& task, int num_robots = 2) {
+void solver(TableList<T>& task, int num_robots, unordered_map<size_t, TableList<T>> caches={}) {
     if (winning_state(task)) {
         cout << "[Info]: Found winning states" << endl;
         return;
@@ -67,8 +68,14 @@ void solver(TableList<T>& task, int num_robots = 2) {
         auto sample_drop = choice(places);
         move(sample_pick, sample_drop, task);
     }
+    auto task_id = task.get_hash();
+    if(caches.find(task_id) == caches.end())
+        caches[task_id] = task;
+    TableList<T> new_task;
+    std::copy(task.begin(), task.end(), back_inserter(new_task));
+    solver(new_task, num_robots, caches);
 
-    solver(task, num_robots);
+
 }
 int main() {
     std::cout << "Hello, World!" << std::endl;
@@ -81,7 +88,7 @@ int main() {
     task.emplace_back(table1);
     task.emplace_back(table2);
 
-    solver(task);
+    solver(task, 2);
 
     cout << task.get_hash() << "| win " <<
     winning_state(task) << endl;

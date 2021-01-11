@@ -90,6 +90,7 @@ public:
 template <typename T>
 class TableList:public vector<T>
 {
+    using TableListPtr = shared_ptr<TableList<T>>;
 public:
 
     size_t get_hash()
@@ -100,7 +101,7 @@ public:
             if( i == 0)
                 value = this->at(i)->get_hash();
             else
-                value = value >> this->at(i)->get_hash();
+                value = value << this->at(i)->get_hash();
         }
         return value;
     }
@@ -111,6 +112,7 @@ public:
             if( this->at(i)->get_id() == table_id)
                 return i;
     }
+
 
 };
 
