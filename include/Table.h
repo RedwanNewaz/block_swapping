@@ -8,6 +8,9 @@
 #include <random>
 #include <ostream>
 #include <iterator>
+#include <string>
+#include <bitset>
+#include <sstream>
 using namespace std;
 #ifndef TAMP_CPP_TABLE_H
 #define TAMP_CPP_TABLE_H
@@ -34,9 +37,10 @@ struct Object
 
 class Table: public enable_shared_from_this<Table>
 {
+    using TablePtr = shared_ptr<Table>;
 public:
     Table(int num_places, int num_blocks, COLOR color):
-    num_places_(num_places)
+    num_places_(num_places), default_color(color)
     {
         assert(num_blocks<num_places && "number of places must be greater than number of blocks");
         status.resize(num_places_);
@@ -60,16 +64,46 @@ public:
 //        copy(blocks.begin(), blocks.end(), ostream_iterator<Object>(cout, "\n"));
 //        cout << endl;
     }
-    shared_ptr<Table> get_ptr()
+    TablePtr get_ptr()
     {
         return shared_from_this();
     }
+
+    std::size_t get_hash()
+    {
+        ostringstream os;
+        copy(status.begin(), status.end(),
+             ostream_iterator<bool>(os, ""));
+        return std::hash<std::string>{}(os.str()) ;
+    }
+
 
 protected:
     int num_places_, id_;
 public:
     vector<bool> status;
     vector<Object> blocks;
+    COLOR default_color;
+};
+
+template <typename T>
+class TableList:public vector<T>
+{
+public:
+
+    size_t get_hash()
+    {
+        size_t value;
+        for (int i = 0; i<this->size(); ++i)
+        {
+            if( i == 0)
+                value = this->at(i)->get_hash();
+            else
+                value = value >> this->at(i)->get_hash();
+        }
+        return value;
+    }
+
 };
 
 
