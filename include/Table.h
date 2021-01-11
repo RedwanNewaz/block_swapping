@@ -39,26 +39,26 @@ public:
     num_places_(num_places)
     {
         assert(num_blocks<num_places && "number of places must be greater than number of blocks");
-        status_.resize(num_places_);
+        status.resize(num_places_);
         for (int i = 0; i < num_blocks; ++i) {
-            status_[i] = true;
+            status[i] = true;
         }
         random_device randomDevice;
         mt19937 gt(randomDevice());
-        shuffle(status_.begin(), status_.end(),gt);
+        shuffle(status.begin(), status.end(), gt);
         id_ = rand();
         int count = 0;
-        for (auto item: status_)
+        for (auto item: status)
         {
             if (item)
-                blocks_.emplace_back(Object{id_, count, color});
+                blocks.emplace_back(Object{id_, count, color});
             else
-                blocks_.emplace_back(Object{id_, count, BLACK});
+                blocks.emplace_back(Object{id_, count, BLACK});
             ++count;
         }
-        cout << "[Table] #places "<< num_places  << endl;
-        copy(blocks_.begin(), blocks_.end(), ostream_iterator<Object>(cout, "\n"));
-        cout << endl;
+//        cout << "[Table] #places "<< num_places  << endl;
+//        copy(blocks.begin(), blocks.end(), ostream_iterator<Object>(cout, "\n"));
+//        cout << endl;
     }
     shared_ptr<Table> get_ptr()
     {
@@ -67,8 +67,9 @@ public:
 
 protected:
     int num_places_, id_;
-    vector<bool> status_;
-    vector<Object> blocks_;
+public:
+    vector<bool> status;
+    vector<Object> blocks;
 };
 
 
