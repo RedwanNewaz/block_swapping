@@ -1,0 +1,20 @@
+mapname: "../examples/easy_map.png"
+occupancy_map: "../examples/easy_map_obs3.png"
+table1:
+  places:
+    0: [70, 48]
+    1: [220, 48]
+    2: [380, 48]
+    3: [522, 48]
+  color: 5
+table2:
+  places:
+    0: [70,  480]
+    1: [220, 480]
+    2: [380, 480]
+    3: [522, 480]
+  color: 2
+num_blocks: 3
+num_places: 4
+num_robots: 2
+num_samples: 500

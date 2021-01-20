@@ -60,21 +60,32 @@ public:
                 blocks.emplace_back(Object{id_, count, BLACK});
             ++count;
         }
-//        cout << "[Table] #places "<< num_places  << endl;
-//        copy(blocks.begin(), blocks.end(), ostream_iterator<Object>(cout, "\n"));
-//        cout << endl;
+    }
+    Table(int num_places,  COLOR color, int id):
+            num_places_(num_places), default_color(color), id_(id)
+    {
+
     }
     TablePtr get_ptr()
     {
         return shared_from_this();
     }
+    TablePtr copy()
+    {
+        auto table = make_shared<Table>(num_places_, default_color, id_);
+        std::copy(blocks.begin(), blocks.end(), back_inserter(table->blocks));
+        std::copy(status.begin(), status.end(), back_inserter(table->status));
+        return table->get_ptr();
+    }
 
-    std::size_t get_hash()
+    unsigned long get_hash()
     {
         ostringstream os;
-        copy(status.begin(), status.end(),
+        std::copy(status.begin(), status.end(),
              ostream_iterator<bool>(os, ""));
-        return std::hash<std::string>{}(os.str()) ;
+
+        std::bitset<16> bits(os.str());
+        return bits.to_ulong();
     }
 
     int get_id(){ return id_;};
@@ -90,7 +101,7 @@ public:
 template <typename T>
 class TableList:public vector<T>
 {
-    using TableListPtr = shared_ptr<TableList<T>>;
+
 public:
 
     size_t get_hash()
@@ -112,7 +123,6 @@ public:
             if( this->at(i)->get_id() == table_id)
                 return i;
     }
-
 
 };
 
