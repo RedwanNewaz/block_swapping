@@ -25,7 +25,8 @@ CPMAddPackage(
 find_package(Matplot++ REQUIRED)
 find_package(OMPL REQUIRED)
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
-add_executable(TAMP_CPP main.cpp include/Table.h src/solver.cpp src/Display.cpp include/Display.h src/PathPlanning.cpp include/PathPlanning.h)
+add_executable(TAMP_CPP main.cpp include/Table.h src/solver.cpp src/Display.cpp include/Display.h
+        src/PathPlanning.cpp include/PathPlanning.h include/Task.h)
 target_link_libraries(${PROJECT_NAME}
         ${Boost_LIBRARIES}
         -pthread

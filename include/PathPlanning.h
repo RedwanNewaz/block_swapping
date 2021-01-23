@@ -19,6 +19,7 @@
 #include <opencv2/imgproc.hpp>
 #include <vector>
 #include <iterator>
+#include <cassert>
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
@@ -27,8 +28,8 @@ class PathPlanning {
 public:
     PathPlanning(const string& yamlfile);
     bool isStateValid(const ob::State *state);
-    vector<cv::Point> move( int from_place,  int to_place, bool reversed);
-
+    vector<cv::Point> move(const vector<double>& start, const vector<double>& goal);
+    vector<double> get_target(int table_id, int block_id);
 private:
     cv::Mat _img;
     vector<vector<double>> _top_blocks, _bottom_blocks;

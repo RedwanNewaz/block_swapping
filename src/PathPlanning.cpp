@@ -50,9 +50,11 @@ bool PathPlanning::isStateValid(const ob::State *state)
 }
 
 
-vector<cv::Point> PathPlanning::move( int from_place,  int to_place, bool reversed) {
+vector<cv::Point> PathPlanning::move( const vector<double>& vec_start, const vector<double>& vec_goal) {
 
     //TODO sanity check
+    assert(vec_start.size() == 2);
+    assert(vec_goal.size() == 2);
 
     // construct the state space we are planning in
     auto space(std::make_shared<ob::SE2StateSpace>());
@@ -78,18 +80,15 @@ vector<cv::Point> PathPlanning::move( int from_place,  int to_place, bool revers
     // create a random start state
     ob::ScopedState<ob::SE2StateSpace> start(space);
 //    start.random();
-    start->setX(_bottom_blocks[from_place][0]);
-    start->setY(_bottom_blocks[from_place][1]);
+    start->setX(vec_start[0]);
+    start->setY(vec_start[1]);
     // create a random goal state
     ob::ScopedState<ob::SE2StateSpace> goal(space);
-    goal->setX(_top_blocks[to_place][0]);
-    goal->setY(_top_blocks[to_place][1]);
-
-    if (reversed)std::swap(start, goal);
+    goal->setX(vec_goal[0]);
+    goal->setY(vec_goal[1]);
 
     // set the start and goal states
     ss.setStartAndGoalStates(start, goal);
-
     // this call is optional, but we put it in to get more output information
     ss.setup();
 //    ss.print();
@@ -116,5 +115,9 @@ vector<cv::Point> PathPlanning::move( int from_place,  int to_place, bool revers
         std::cout << "No solution found" << std::endl;
 
     return result;
+}
+
+vector<double> PathPlanning::get_target(int table_id, int block_id) {
+    return (table_id == 0)? _bottom_blocks[block_id]:_top_blocks[block_id];
 }
 

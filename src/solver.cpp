@@ -3,11 +3,20 @@
 //
 #include <algorithm>
 #include <map>
+#include <future>
+#include <chrono>
+#include <thread>
 #include "../include/Table.h"
-
+#include "../include/Task.h"
 #define DEBUG_INFO(x) cout << "\033[1;36m" << x << "\033[0m"
 #define RECURSION_LIMIT (10000)
 using namespace std;
+using namespace std::literals;
+typedef pair<int, Task> SOL;
+
+
+
+
 namespace recursive_solver
 {
     typedef pair<size_t, size_t> table_block_pair;
@@ -54,7 +63,7 @@ namespace recursive_solver
 
 
     template <typename T>
-    inline int solver(TableList<T>& task, int num_robots, map<size_t, size_t>& caches, int recursion_count = 0) {
+    inline int solver(TableList<T>& task, int num_robots, Task& assignments, int recursion_count = 0) {
         if (winning_state(task)) {
 //            DEBUG_INFO ("[Info]: Found winning states  "<< task.get_hash() << endl);
             return 0;
@@ -67,7 +76,6 @@ namespace recursive_solver
         // get available actions in terms of picks and places
         vector<table_block_pair> blocks, places;
 
-        auto task_id_from = task.get_hash();
         bool pick = true;
         bool drop = false;
         for (int i = 0; i < task.size(); ++i) {
@@ -78,31 +86,70 @@ namespace recursive_solver
         for (int j = 0; j < num_robots; ++j) {
             auto sample_pick = choice(blocks);
             auto sample_drop = choice(places);
+            assignments.add_task(j, sample_pick.second, sample_drop.second);
+            assignments.add_table(j, sample_pick.first, sample_drop.first);
             move(sample_pick, sample_drop, task);
         }
-        auto task_id_to = task.get_hash();
-        caches.insert(make_pair(task_id_to, task_id_from));
-        return solver(task, num_robots, caches, ++recursion_count) + 1;
+        assignments.add_state(task.get_hash());
+
+        return solver(task, num_robots, assignments, ++recursion_count) + 1;
 
     }
 
-    inline int solution_length(size_t start, size_t goal, map<size_t, size_t>&solution, bool verbose )
+}
+
+
+
+inline SOL synthesis(int num_places, int num_blocks, int num_robots)
+{
+    auto table1 = make_shared<Table>(num_places,num_blocks,BLUE, 0);
+    auto table2 = make_shared<Table>(num_places,num_blocks,RED, 1);
+    int search_len;
+
+    TableList<shared_ptr<Table>> task;
+    task.emplace_back(table1->copy());
+    task.emplace_back(table2->copy());
+    Task assignments(num_robots);
+    search_len = recursive_solver::solver(task, num_robots, assignments);
+
+    return make_pair(search_len, assignments);
+}
+
+
+
+
+inline vector<Task> parallel_solver(int num_places, int num_blocks, int num_robots, int num_samples)
+{
+
+    DEBUG_INFO("[Info]: number of samples " << num_samples << endl);
+    vector<future<SOL>>parallel;
+    parallel.reserve(num_samples);
+    for (int i = 0; i < num_samples; ++i) {
+        parallel.emplace_back(std::async(std::launch::async, synthesis, num_places, num_blocks, num_robots));
+    }
+    DEBUG_INFO("[Info]: parallel solvers started "<<endl);
+
+    auto start_time = std::chrono::steady_clock::now();
+    bool terminated = false;
+    auto time_display = [&]()
     {
-        int count = 0;
-        int max_iter = 100;
-        while(goal != start )
+        while (!terminated)
         {
-            if (verbose)
-                cout << "["<< goal << "] <- " ;
-            goal = solution[goal];
-            if(--max_iter <= 0)
-                break;
-
-            ++count;
+            auto end_time = std::chrono::steady_clock::now();
+            std::cout << "..("
+                      << std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time).count()
+                      << " s)..\r" << std::flush;
+            this_thread::sleep_for(1s);
         }
-        if (verbose)
-            cout << "["<< goal << "] \n " ;
-        return ++count;
+    };
+    std::thread thr{time_display};
+    vector<Task> solution_pool;
+    for (int i = 0; i < num_samples; ++i)
+    {
+        auto solution = parallel[i].get();
+        solution_pool.emplace_back(solution.second);
     }
-
+    terminated = true;
+    thr.join();
+    return solution_pool;
 }

@@ -1,6 +1,9 @@
 //
 // Created by Redwan Newaz on 1/11/21.
 //
+
+#ifndef TAMP_CPP_TABLE_H
+#define TAMP_CPP_TABLE_H
 #include <iostream>
 #include <memory>
 #include <cassert>
@@ -11,9 +14,9 @@
 #include <string>
 #include <bitset>
 #include <sstream>
+#include <boost/dynamic_bitset.hpp>
 using namespace std;
-#ifndef TAMP_CPP_TABLE_H
-#define TAMP_CPP_TABLE_H
+
 
 enum COLOR
 {
@@ -39,8 +42,8 @@ class Table: public enable_shared_from_this<Table>
 {
     using TablePtr = shared_ptr<Table>;
 public:
-    Table(int num_places, int num_blocks, COLOR color):
-    num_places_(num_places), default_color(color)
+    Table(int num_places, int num_blocks, COLOR color, int id):
+    num_places_(num_places), default_color(color), id_(id)
     {
         assert(num_blocks<num_places && "number of places must be greater than number of blocks");
         status.resize(num_places_);
@@ -50,7 +53,7 @@ public:
         random_device randomDevice;
         mt19937 gt(randomDevice());
         shuffle(status.begin(), status.end(), gt);
-        id_ = rand();
+
         int count = 0;
         for (auto item: status)
         {
@@ -78,17 +81,20 @@ public:
         return table->get_ptr();
     }
 
-    unsigned long get_hash()
+    boost::dynamic_bitset<>  get_hash()
     {
         ostringstream os;
         std::copy(status.begin(), status.end(),
              ostream_iterator<bool>(os, ""));
 
-        std::bitset<16> bits(os.str());
-        return bits.to_ulong();
+//        std::bitset<16> bits(os.str());
+        boost::dynamic_bitset<> bits(os.str());
+        return bits;
     }
 
     int get_id(){ return id_;};
+
+    size_t size(){return num_places_;}
 
 protected:
     int num_places_, id_;
@@ -106,15 +112,16 @@ public:
 
     size_t get_hash()
     {
-        size_t value;
+        int N = this->at(0)->size();
+        boost::dynamic_bitset<> jointHash(this->size()*N);
         for (int i = 0; i < this->size(); ++i)
         {
-            if( i == 0)
-                value = this->at(i)->get_hash();
-            else
-                value = value << this->at(i)->get_hash();
+            auto tableHash = this->at(i)->get_hash();
+            for (int j = 0; j < tableHash.size(); ++j) {
+                jointHash[j + N*i] = tableHash[j];
+            }
         }
-        return value;
+        return jointHash.to_ulong();
     }
 
     int find_index(int table_id)
