@@ -100,10 +100,10 @@ namespace recursive_solver
 
 
 
-inline SOL synthesis(int num_places, int num_blocks, int num_robots)
+inline SOL synthesis(int num_places, int num_blocks, int num_robots, const vector<bool>&status1, const vector<bool>&status2)
 {
-    auto table1 = make_shared<Table>(num_places,num_blocks,BLUE, 0);
-    auto table2 = make_shared<Table>(num_places,num_blocks,RED, 1);
+    auto table1 = make_shared<Table>(num_places,num_blocks,BLUE, 0, status1);
+    auto table2 = make_shared<Table>(num_places,num_blocks,RED, 1, status2);
     int search_len;
 
     TableList<shared_ptr<Table>> task;
@@ -121,11 +121,21 @@ inline SOL synthesis(int num_places, int num_blocks, int num_robots)
 inline vector<Task> parallel_solver(int num_places, int num_blocks, int num_robots, int num_samples)
 {
 
+    random_device randomDevice;
+    mt19937 gt(randomDevice());
+    vector<bool> input1(num_places, false);
+    vector<bool> input2(num_places, false);
+    for (int i = 0; i < num_blocks; ++i) {
+        input1[i] = input2[i] = true;
+    }
+    shuffle(input1.begin(), input1.end(), gt);
+    shuffle(input2.begin(), input2.end(), gt);
+
     DEBUG_INFO("[Info]: number of samples " << num_samples << endl);
     vector<future<SOL>>parallel;
     parallel.reserve(num_samples);
     for (int i = 0; i < num_samples; ++i) {
-        parallel.emplace_back(std::async(std::launch::async, synthesis, num_places, num_blocks, num_robots));
+        parallel.emplace_back(std::async(std::launch::async, synthesis, num_places, num_blocks, num_robots, input1, input2));
     }
     DEBUG_INFO("[Info]: parallel solvers started "<<endl);
 

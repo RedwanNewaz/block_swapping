@@ -42,17 +42,17 @@ class Table: public enable_shared_from_this<Table>
 {
     using TablePtr = shared_ptr<Table>;
 public:
-    Table(int num_places, int num_blocks, COLOR color, int id):
+    Table(int num_places, int num_blocks, COLOR color, int id, const vector<bool>&input):
     num_places_(num_places), default_color(color), id_(id)
     {
         assert(num_blocks<num_places && "number of places must be greater than number of blocks");
         status.resize(num_places_);
         for (int i = 0; i < num_blocks; ++i) {
-            status[i] = true;
+            status[i] = input[i];
         }
-        random_device randomDevice;
-        mt19937 gt(randomDevice());
-        shuffle(status.begin(), status.end(), gt);
+//        random_device randomDevice;
+//        mt19937 gt(randomDevice());
+//        shuffle(status.begin(), status.end(), gt);
 
         int count = 0;
         for (auto item: status)

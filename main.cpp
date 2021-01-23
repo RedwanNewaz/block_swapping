@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
             ("num_places", value<int>()->default_value(4), "#places per table")
             ("num_robots", value<int>()->default_value(2), "total number of robots")
             ("num_blocks", value<int>()->default_value(3), "#blocks per table")
-            ("num_samples", value<int>()->default_value(1000), "#samples for solutions");
+            ("num_samples", value<int>()->default_value(500), "#samples for solutions");
     variables_map vm;
     store(parse_command_line(argc, argv, desc), vm);
     notify(vm);
